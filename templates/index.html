@@ -2,50 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multilingual Translator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1.1rem;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .translation {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #e9ecef;
+      border-radius: 4px;
+    }
+    .translation h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+  </style>
 </head>
 <body>
-  <h1>Multilingual Translator</h1>
-  <form method="post">
-    <!-- Source Language Selection -->
-    <div>
-      <label for="source_lang">Ancient Language:</label><br>
-      <select id="source_lang" name="source_lang">
-        {% for src in sources %}
+  <div class="container">
+    <h1>Multilingual Translator</h1>
+    <form method="post">
+      <div class="form-group">
+        <label for="source_lang">Ancient Language</label>
+        <select id="source_lang" name="source_lang">
+          {% for src in sources %}
           <option value="{{ src }}" {% if src == selected_source %}selected{% endif %}>{{ src }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <br>
+          {% endfor %}
+        </select>
+      </div>
 
-    <!-- Text Input -->
-    <div>
-      <label for="text_input">Enter text:</label><br>
-      <textarea id="text_input" name="text_input" rows="6" cols="60" placeholder="Paste your text here">{{ request.form.get('text_input', '') }}</textarea>
-    </div>
-    <br>
+      <div class="form-group">
+        <label for="text_input">Enter Text</label>
+        <textarea id="text_input" name="text_input" placeholder="Paste your text here">{{ request.form.get('text_input', '') }}</textarea>
+      </div>
 
-    <!-- Prompt Style Selection -->
-    <div>
-      <label for="prompt_style">Select prompt style:</label><br>
-      <select id="prompt_style" name="prompt_style">
-        {% for style in prompt_styles %}
+      <div class="form-group">
+        <label for="prompt_style">Prompt Style</label>
+        <select id="prompt_style" name="prompt_style">
+          {% for style in prompt_styles %}
           <option value="{{ style }}" {% if style == selected_prompt %}selected{% endif %}>{{ style }}</option>
-        {% endfor %}
-      </select>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit">Translate</button>
+    </form>
+
+    {% if translation %}
+    <div class="translation">
+      <h2>Translation</h2>
+      <p>{{ translation }}</p>
     </div>
-    <br>
-
-    <button type="submit">Process</button>
-  </form>
-
-  {% if translation %}
-    <h2>Translation</h2>
-    <p>{{ translation }}</p>
-  {% endif %}
+    {% endif %}
+  </div>
 
   <script>
-    // Mapping of sources to their prompt style keys, passed from Flask as 'prompt_map'
+    // Dynamic prompt-style update on source change
     const promptMap = {{ prompt_map | tojson }};
     const sourceSelect = document.getElementById('source_lang');
     const promptSelect = document.getElementById('prompt_style');
@@ -53,9 +121,7 @@
     sourceSelect.addEventListener('change', () => {
       const selected = sourceSelect.value;
       const styles = promptMap[selected] || [];
-      // Clear existing options
       promptSelect.innerHTML = '';
-      // Populate new options
       styles.forEach(style => {
         const opt = document.createElement('option');
         opt.value = style;

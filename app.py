@@ -1,3 +1,15 @@
+import os
+# limit native parallelism for BLAS/OpenMP, etc.
+os.environ["OMP_NUM_THREADS"] = "18"
+os.environ["MKL_NUM_THREADS"] = "18"
+os.environ["OPENBLAS_NUM_THREADS"] = "18"
+os.environ["NUMEXPR_NUM_THREADS"] = "18"
+
+import torch
+torch.set_num_threads(18)
+torch.set_num_interop_threads(18)
+
+
 from flask import Flask, render_template, request
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 
@@ -44,7 +56,17 @@ MODEL_CONFIG = {
             "English → Transliteration": "Translate English to Hittite transliteration: ",
             "German → Transliteration": "Translate German to Hittite transliteration: "
         }
-    }
+    },
+    "Linear B": {
+        "model_name": "thalesian/GMY-60m",
+        "prompt_styles": {
+            "Linear B → English": "Translate Linear B cuneiform to English: ",
+            "Transliteration → English": "Translate complex Linear B transliteration to English: ",
+            "English → Linear B": "Translate English to Linear B cuneiform: ",
+            "English → Transliteration": "Translate English to complex Linear B transliteration: ",
+            "Linear B → Transliteration": "Transliterate Linear B cuneiform to complex Latin characters: "
+        }
+    },
 }
 
 # Caches for loaded models and tokenizers
@@ -82,24 +104,14 @@ def index():
         user_input = request.form.get('text_input', '')
 
         # Normalize input based on source and task type
-        if source == 'Akkadian':
-            if 'cuneiform' in prompt_key.lower():
-                processed = normalizeString_cuneiform(
-                    user_input,
-                    use_prefix=False,
-                    task="Translate",
-                    language=source,
-                    modern=target
-                )
-            else:
-                processed = normalizeString_cuneiform_transliterate_translate(
-                    user_input,
-                    use_prefix=False,
-                    task="Translate",
-                    type="original",
-                    language=source,
-                    modern=target
-                )
+        if 'cuneiform' in prompt_key.lower():
+            processed = normalizeString_cuneiform(
+                user_input,
+                use_prefix=False,
+                task="Translate",
+                language=source,
+                modern=target
+            )
         else:
             processed = normalizeString_cuneiform_transliterate_translate(
                 user_input,
@@ -109,6 +121,7 @@ def index():
                 language=source,
                 modern=target
             )
+
 
         # Tokenize and generate
         inputs = tokenizer(prefix + processed, return_tensors='pt')
@@ -126,5 +139,6 @@ def index():
         request=request
     )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # host=0.0.0.0 makes it publicly bind on all interfaces
+    app.run(host="0.0.0.0", port=5000, debug=True)
