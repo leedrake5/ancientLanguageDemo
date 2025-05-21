@@ -29,3 +29,6 @@ Linear B/Mycenan Greek: [GMY-60m](https://huggingface.co/Thalesian/GMY-60m)
 
 We are working next on Sumerian and Elamite. Sumerian's principle challenge is low translation quality, Elamite's is sufficient texts to train a model. 
 
+Disclaimer: These scores (particulalry Hittite -> German and Akkadian -> English) are very high - this is because we are training on extremely short contexts of lines on small tablets; it is the nature of the data we have. 
+
+
